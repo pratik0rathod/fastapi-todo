@@ -13,11 +13,9 @@ class TodoModel(BaseModel):
 class User(BaseModel):
     username: str
 
-
 class CreateUser(User):
     email: EmailStr
     password: str
-
 
 class UserLogin(User):
     password: str

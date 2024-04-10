@@ -9,7 +9,9 @@ from .schema import TodoModel,CreateUser,UserLogin
 from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
 
 from typing import Annotated
+from .auth import get_current_user,decode_token
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 auth_router = APIRouter(prefix="/auth", tags=['user'])
 
@@ -86,23 +88,23 @@ async def todo_update_item(db: Annotated[Session, Depends(get_db)],item:TodoMode
     
 
 
-@auth_router.get("/me")
-async def user_me(test:Annotated[OAuth2PasswordBearer,Depends()]):
-    return {"message": "Under developement"}
 
+@auth_router.get("/me")
+async def user_me(db: Annotated[Session, Depends(get_db)],token: Annotated[str, Depends(get_current_user)]):
+    return jsonable_encoder(auth.get_user(db,token))
 
 
 @auth_router.post("/login")
 async def user_login(db: Annotated[Session, Depends(get_db)],login_details: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # try:
-    message = auth.login_user(db, login_details)
-    return message
-
+    return auth.login_user(db, login_details)
+   
 
 @auth_router.post("/register")
 async def user_register(db:Annotated[Session,Depends(get_db)],registerForm:CreateUser):
     try:
         message = auth.register_user(db,registerForm)
+        print(message)
     except Exception as e:
         print(e)
 

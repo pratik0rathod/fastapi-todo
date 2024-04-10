@@ -5,11 +5,13 @@ from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 from jose import JWTError,jwt
 
-from fastapi import HTTPException,status
+from fastapi import HTTPException,status,Depends
+from typing import Annotated
 
 from datetime import datetime, timedelta, timezone
+from fastapi.security import OAuth2PasswordBearer
 
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 pwd_context = CryptContext(schemes=['bcrypt'],deprecated="auto")
 
@@ -25,7 +27,6 @@ def hash_password(password):
 
 def verify_password(plain_password,hashed_password):
     return pwd_context.verify(plain_password,hashed_password)
-
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
@@ -43,6 +44,30 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
+
+def decode_token(token):
+    decoded = jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHM])
+    
+    return decoded
+
+     
+def get_current_user(token:Annotated[str,Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+    
+        data = decode_token(token) 
+        
+        return data["sub"]
+    
+    except JWTError:
+        raise credentials_exception
+    
+
+
 def register_user(db:Session,user:CreateUser):
 
     user_model = UserOrm(username =user.username,email=user.email,password= hash_password(user.password))
@@ -57,6 +82,15 @@ def register_user(db:Session,user:CreateUser):
     db.commit()
 
     return  {"Success":"User registered succesfully"}
+
+
+def get_user(db:Session,user:str):
+    user = db.query(UserOrm).filter(UserOrm.username==user).first()
+    print(user.user_id)
+    # return CreateUser.model_validate()
+    return {"success":"something"}
+
+
 
 
 def login_user(db:Session,user_login_details:UserLogin):

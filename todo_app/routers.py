@@ -98,22 +98,6 @@ async def user_login(db: Annotated[Session, Depends(get_db)],login_details: Anno
     message = auth.login_user(db, login_details)
     return message
 
-# @auth_router.post("/login")
-# async def user_login(db:Annotated[Session,Depends(get_db)],login_details:Annotated[OAuth2PasswordRequestForm,Depends()]):
- 
-#     token = auth.login_user(db,login_details)        
-#     try:
-#         if not token:
-#             raise HTTPException(
-#                 status_code=status.HTTP_401_UNAUTHORIZED,
-#                 detail="Incorrect username or password",
-#                 headers={"WWW-Authenticate": "Bearer"},
-#             )   
-#         return token
-#     except Exception as e:
-#         print(e)
-#         # raise e
-#     return "False"
 
 @auth_router.post("/register")
 async def user_register(db:Annotated[Session,Depends(get_db)],registerForm:CreateUser):

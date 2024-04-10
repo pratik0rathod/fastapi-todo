@@ -66,10 +66,9 @@ def get_current_user(token:Annotated[str,Depends(oauth2_scheme)]):
     except JWTError:
         raise credentials_exception
     
-
+# Work with Routes 
 
 def register_user(db:Session,user:CreateUser):
-
     user_model = UserOrm(username =user.username,email=user.email,password= hash_password(user.password))
    
     if db.query(UserOrm).filter(UserOrm.username == user_model.username).first() is not None:
@@ -86,9 +85,8 @@ def register_user(db:Session,user:CreateUser):
 
 def get_user(db:Session,user:str):
     user = db.query(UserOrm).filter(UserOrm.username==user).first()
-    print(user.user_id)
     # return CreateUser.model_validate()
-    return {"success":"something"}
+    return user
 
 
 

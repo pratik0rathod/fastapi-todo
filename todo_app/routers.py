@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException,Form
+from fastapi import APIRouter, Depends, HTTPException,Form,status
 from fastapi.encoders import jsonable_encoder
 
 from sqlalchemy.orm import Session
 
 from .database import session_local
 from . import crud,auth
-from .schema import TodoModel,CreateUser
+from .schema import TodoModel,CreateUser,UserLogin
+from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
 
 from typing import Annotated
 
@@ -21,9 +22,11 @@ def get_db():
     db = session_local()
     try:
         yield db
-    except:
+    except Exception as e:
         db.close()
+        print(e)
 
+        raise e
 
 # Todo items
 
@@ -50,13 +53,11 @@ async def todo_get_item(db:Annotated[Session,Depends(get_db)],todo_id: int):
 
 @todo_router.post("/add")
 async def todo_create_item(todo: TodoModel, db: Annotated[Session, Depends(get_db)]):
-
     try:
         data = crud.create_item(todo, db)
         return {"Todo Items": jsonable_encoder(data)}
     except Exception as e:
         print(e)
-
         return HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
     # return {"message":"Under developement"}
 
@@ -64,7 +65,6 @@ async def todo_create_item(todo: TodoModel, db: Annotated[Session, Depends(get_d
 @todo_router.delete("/delete/{todo_id}")
 async def todo_delete_item(db: Annotated[Session, Depends(get_db)], todo_id: int):
     try:
-
         data = crud.delete_item(db, todo_id)
         print(jsonable_encoder(data))
         return {"Entery Deleted": jsonable_encoder(data)}
@@ -73,12 +73,9 @@ async def todo_delete_item(db: Annotated[Session, Depends(get_db)], todo_id: int
 
         return HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
 
-    # return {"message":"Under developement"}
-
 
 @todo_router.put("/update/{todo_id}")
 async def todo_update_item(db: Annotated[Session, Depends(get_db)],item:TodoModel, todo_id: int):
-
     try:
         data = crud.update_item(item,db,todo_id)
         print(jsonable_encoder(data))
@@ -90,21 +87,38 @@ async def todo_update_item(db: Annotated[Session, Depends(get_db)],item:TodoMode
 
 
 @auth_router.get("/me")
-async def user_me():
+async def user_me(test:Annotated[OAuth2PasswordBearer,Depends()]):
     return {"message": "Under developement"}
+
 
 
 @auth_router.post("/login")
-async def user_login():
-    return {"message": "Under developement"}
+async def user_login(db: Annotated[Session, Depends(get_db)],login_details: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    # try:
+    message = auth.login_user(db, login_details)
+    return message
 
+# @auth_router.post("/login")
+# async def user_login(db:Annotated[Session,Depends(get_db)],login_details:Annotated[OAuth2PasswordRequestForm,Depends()]):
+ 
+#     token = auth.login_user(db,login_details)        
+#     try:
+#         if not token:
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED,
+#                 detail="Incorrect username or password",
+#                 headers={"WWW-Authenticate": "Bearer"},
+#             )   
+#         return token
+#     except Exception as e:
+#         print(e)
+#         # raise e
+#     return "False"
 
 @auth_router.post("/register")
 async def user_register(db:Annotated[Session,Depends(get_db)],registerForm:CreateUser):
     try:
-    
         message = auth.register_user(db,registerForm)
-        
     except Exception as e:
         print(e)
 

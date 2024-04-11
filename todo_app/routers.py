@@ -42,7 +42,8 @@ async def todo_get_all(db:Annotated[Session,Depends(get_db)] ,user: Annotated[st
         return {"Todo Items": jsonable_encoder(data)}
     # print(data)
     except Exception as e:
-        return HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
+        print(e)
+        return HTTPException(status_code=400, detail={"message": "internal server error"})
 
 
 @todo_router.get("/item/{todo_id}")
@@ -50,8 +51,9 @@ async def todo_get_item(db:Annotated[Session,Depends(get_db)],todo_id: int,user:
     try:
         data = crud.read_a_item(db,todo_id,user)
         return {"Todo Item": jsonable_encoder(data)}
-    except Exception as e:
-        return HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
+    except Exception as e: 
+        print(e)
+        return HTTPException(status_code=400, detail={"message": "internal server error"})
 
 
 
@@ -63,8 +65,7 @@ async def todo_create_item(todo: TodoModel, db: Annotated[Session, Depends(get_d
     
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
-    # return {"message":"Under developement"}
+        return HTTPException(status_code=400, detail={"message": "internal server error"})
 
 
 @todo_router.delete("/delete/{todo_id}")
@@ -75,8 +76,7 @@ async def todo_delete_item(db: Annotated[Session, Depends(get_db)], todo_id: int
         return {"Entery Deleted": jsonable_encoder(data)}
     except Exception as e:
         print(e)
-
-        return HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
+        return HTTPException(status_code=400, detail={"message": "internal server error"})
 
 
 @todo_router.put("/update/{todo_id}")
@@ -87,8 +87,8 @@ async def todo_update_item(db: Annotated[Session, Depends(get_db)],item:TodoMode
         return {"Entery Deleted": jsonable_encoder(data)}
     except Exception as e:
         print(e)
-        return HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
-    
+        return HTTPException(status_code=400, detail={"message": "internal server error"})
+
 
 
 

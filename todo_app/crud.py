@@ -1,9 +1,9 @@
 from sqlalchemy.orm  import Session
 from fastapi import Depends
-from .schema import TodoModel
+from .schema import TodoModel,FilterModel
 from .database import Base,engine
 from . import models
-from sqlalchemy import update
+from sqlalchemy import update,select
 
 #create table in data base
 Base.metadata.create_all(engine)
@@ -63,3 +63,10 @@ def delete_item(db:Session,id:int,user:int):
         return {"error":"Item not found"}
 
 
+def search_item(db:Session,user:int,filter:FilterModel):
+    query = select(models.TodoItemOrm)
+    query = filter.filter(query)
+    query = query.filter(models.TodoItemOrm.auther_id == user)
+    results = db.execute(query)
+    
+    return results.scalars().all()

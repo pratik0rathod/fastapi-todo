@@ -1,13 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException,Form
+from fastapi import APIRouter, Depends, HTTPException,Form,Query
 from fastapi.encoders import jsonable_encoder
 
 from sqlalchemy.orm import Session
 
 from .database import session_local
 from . import crud,auth
-from .schema import TodoModel,CreateUser,CreateTodo
+from .schema import TodoModel,CreateUser,CreateTodo,FilterModel
 from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
-
+from fastapi_filter import FilterDepends
 from typing import Annotated
 from .auth import get_current_user,decode_token
 
@@ -67,6 +67,11 @@ async def todo_create_item(todo: TodoModel, db: Annotated[Session, Depends(get_d
         print(e)
         return HTTPException(status_code=400, detail={"message": "internal server error"})
 
+@todo_router.post("/search")
+async def todo_item_search(db:Annotated[Session,Depends(get_db)],user: Annotated[str, Depends(get_current_user)],filter:Annotated[FilterModel,Depends(FilterModel)]):
+    
+    return jsonable_encoder(crud.search_item(db,user,filter))
+
 
 @todo_router.delete("/delete/{todo_id}")
 async def todo_delete_item(db: Annotated[Session, Depends(get_db)], todo_id: int,user: Annotated[str, Depends(get_current_user)]):
@@ -74,6 +79,7 @@ async def todo_delete_item(db: Annotated[Session, Depends(get_db)], todo_id: int
         data = crud.delete_item(db, todo_id,user)
         print(jsonable_encoder(data))
         return {"Entery Deleted": jsonable_encoder(data)}
+    
     except Exception as e:
         print(e)
         return HTTPException(status_code=400, detail={"message": "internal server error"})

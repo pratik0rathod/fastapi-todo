@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from .database import session_local
 from . import crud,auth
-from .schema import TodoModel,CreateUser,UserLogin
+from .schema import TodoModel,CreateUser,CreateTodo
 from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
 
 from typing import Annotated
@@ -34,9 +34,11 @@ def get_db():
 
 
 @todo_router.get("/all")
-async def todo_get_all(db: Session = Depends(get_db)):
+async def todo_get_all(db:Annotated[Session,Depends(get_db)] ,user: Annotated[str, Depends(get_current_user)]):
+   
     try:
-        data = crud.read_items(db)
+        data = crud.read_items(db,user)
+   
         return {"Todo Items": jsonable_encoder(data)}
     # print(data)
     except Exception as e:
@@ -44,9 +46,9 @@ async def todo_get_all(db: Session = Depends(get_db)):
 
 
 @todo_router.get("/item/{todo_id}")
-async def todo_get_item(db:Annotated[Session,Depends(get_db)],todo_id: int):
+async def todo_get_item(db:Annotated[Session,Depends(get_db)],todo_id: int,user: Annotated[str, Depends(get_current_user)]):
     try:
-        data = crud.read_a_item(db,todo_id)
+        data = crud.read_a_item(db,todo_id,user)
         return {"Todo Item": jsonable_encoder(data)}
     except Exception as e:
         return HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
@@ -54,20 +56,21 @@ async def todo_get_item(db:Annotated[Session,Depends(get_db)],todo_id: int):
 
 
 @todo_router.post("/add")
-async def todo_create_item(todo: TodoModel, db: Annotated[Session, Depends(get_db)]):
+async def todo_create_item(todo: TodoModel, db: Annotated[Session, Depends(get_db)],user: Annotated[str, Depends(get_current_user)]):
     try:
-        data = crud.create_item(todo, db)
+        data = crud.create_item(todo, db,user)
         return {"Todo Items": jsonable_encoder(data)}
+    
     except Exception as e:
         print(e)
-        return HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
+        raise HTTPException(status_code=400, detail={"message": jsonable_encoder(e)})
     # return {"message":"Under developement"}
 
 
 @todo_router.delete("/delete/{todo_id}")
-async def todo_delete_item(db: Annotated[Session, Depends(get_db)], todo_id: int):
+async def todo_delete_item(db: Annotated[Session, Depends(get_db)], todo_id: int,user: Annotated[str, Depends(get_current_user)]):
     try:
-        data = crud.delete_item(db, todo_id)
+        data = crud.delete_item(db, todo_id,user)
         print(jsonable_encoder(data))
         return {"Entery Deleted": jsonable_encoder(data)}
     except Exception as e:
@@ -77,9 +80,9 @@ async def todo_delete_item(db: Annotated[Session, Depends(get_db)], todo_id: int
 
 
 @todo_router.put("/update/{todo_id}")
-async def todo_update_item(db: Annotated[Session, Depends(get_db)],item:TodoModel, todo_id: int):
+async def todo_update_item(db: Annotated[Session, Depends(get_db)],item:TodoModel, todo_id: int,user: Annotated[str, Depends(get_current_user)]):
     try:
-        data = crud.update_item(item,db,todo_id)
+        data = crud.update_item(item,db,todo_id,user)
         print(jsonable_encoder(data))
         return {"Entery Deleted": jsonable_encoder(data)}
     except Exception as e:
@@ -112,5 +115,14 @@ async def user_register(db:Annotated[Session,Depends(get_db)],registerForm:Creat
 
 
 @auth_router.put("/update")
-async def user_update():
-    return {"message": "Under developement"}
+async def user_update(db:Annotated[Session,Depends(get_db)],update_details:Annotated[CreateUser,None],user: Annotated[str, Depends(get_current_user)]):
+    try:
+    
+        return auth.update_user(db,update_details,user)
+    
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500,detail={"Message":"Internal server error"})
+    
+    
+        

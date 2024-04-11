@@ -5,9 +5,10 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from todo_app.database import Base
 
 from todo_app.models import UserOrm,TodoItemOrm
+
+from todo_app.database import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

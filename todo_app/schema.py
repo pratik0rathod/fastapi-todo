@@ -10,8 +10,12 @@ class TodoModel(BaseModel):
     status: bool | None = True
 
 
+class CreateTodo(TodoModel):
+    user_id:int
+
 class User(BaseModel):
     username: str
+
 
 class CreateUser(User):
     email: EmailStr
@@ -19,6 +23,7 @@ class CreateUser(User):
 
 class UserLogin(User):
     password: str
+
 
 class Token(BaseModel):
     access_token: str

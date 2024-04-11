@@ -46,26 +46,29 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 def decode_token(token):
+    
     decoded = jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHM])
     
     return decoded
 
      
 def get_current_user(token:Annotated[str,Depends(oauth2_scheme)]):
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
     try:
     
         data = decode_token(token) 
-        
-        return data["sub"]
+        return data["user"]
     
     except JWTError:
         raise credentials_exception
     
+
 # Work with Routes 
 
 def register_user(db:Session,user:CreateUser):
@@ -83,13 +86,10 @@ def register_user(db:Session,user:CreateUser):
     return  {"Success":"User registered succesfully"}
 
 
-def get_user(db:Session,user:str):
-    user = db.query(UserOrm).filter(UserOrm.username==user).first()
-    # return CreateUser.model_validate()
+def get_user(db:Session,user:int):
+    print(user)
+    user = db.query(UserOrm).filter(UserOrm.id==user).first()
     return user
-
-
-
 
 def login_user(db:Session,user_login_details:UserLogin):
     user = db.query(UserOrm).filter(UserOrm.username == user_login_details.username).first()
@@ -98,7 +98,9 @@ def login_user(db:Session,user_login_details:UserLogin):
     
         if verify_password(user_login_details.password,user.password):
             #User verified now we need to create access token
-            token = create_access_token({"sub":"string"},ACCESS_TOKEN_EXPIRE_MINUTES)
+            
+            token = create_access_token({"user":user.id},ACCESS_TOKEN_EXPIRE_MINUTES)
+
             return Token(access_token=token,token_type='Bearer')
     
     raise HTTPException(
@@ -106,3 +108,35 @@ def login_user(db:Session,user_login_details:UserLogin):
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def update_user(db:Session,user_details:CreateUser,user_id:id):
+    
+    user = db.query(UserOrm).filter(UserOrm.id == user_id).first()
+    
+    check_username = db.query(UserOrm).filter(UserOrm.username ==  user_details.username).first()
+    check_email = db.query(UserOrm).filter(UserOrm.email ==  user_details.email).first()
+    
+    #checking if username/email avaiable or not and checking is he even trying to update it 
+    if check_username is not None:
+        if check_username.username != user.username:
+            return {"Error":"Username is taken please use diffent usename"}
+    
+    if check_email is not None:
+        if check_email.email != user.email:
+            return {"Error":"Email is taken please use diffent Email"}
+        
+
+    # if db.query(UserOrm).filter(UserOrm.email ==  user_details.email).first() is not None:
+    #     return {"Error":"Email is taken please use diffrent email"}
+
+
+    user.email = user_details.email
+    user.password = hash_password(user_details.password) 
+    user.username = user_details.username
+
+    db.add(user)
+    db.commit()
+    
+    # print(jsonable_encoder(user))
+    return {"Succes":"succesfully updated"}

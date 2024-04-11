@@ -15,6 +15,7 @@ def create_item(todo_schema:TodoModel,db:Session,user:int):
         title = todo_schema.title, 
         description = todo_schema.description,
         status = todo_schema.status,
+        due_date = todo_schema.due_date,
         auther_id = user
         )
     

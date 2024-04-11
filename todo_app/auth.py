@@ -140,3 +140,13 @@ def update_user(db:Session,user_details:CreateUser,user_id:id):
     
     # print(jsonable_encoder(user))
     return {"Succes":"succesfully updated"}
+
+
+def delete_user(db:Session,confirm:str,user_id:int):
+    if confirm == 'delete':
+        user = db.query(UserOrm).filter(UserOrm.id == user_id).first()
+        db.delete(user)
+        db.commit()
+        return {"success":"User Deleted Successfully with their entries"}
+    else:
+        return {"error":"Please enter comfirmation code: delete"}

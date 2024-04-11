@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException,Form,status
+from fastapi import APIRouter, Depends, HTTPException,Form
 from fastapi.encoders import jsonable_encoder
 
 from sqlalchemy.orm import Session
@@ -124,5 +124,9 @@ async def user_update(db:Annotated[Session,Depends(get_db)],update_details:Annot
         print(e)
         raise HTTPException(status_code=500,detail={"Message":"Internal server error"})
     
-    
-        
+# delete user from db
+
+@auth_router.delete("/delete")
+async def user_delete(db:Annotated[Session,Depends(get_db)],confirm:Annotated[str,Form()],user_id:Annotated[str,Depends(get_current_user)]):
+    return auth.delete_user(db,confirm,user_id)
+

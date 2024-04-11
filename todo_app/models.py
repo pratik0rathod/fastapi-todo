@@ -1,7 +1,7 @@
 from .database import Base
 
 from sqlalchemy import Column,String,Integer,Boolean,DateTime,ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship,backref
 # from pydantic import ConfigDict
 
 
@@ -34,7 +34,7 @@ class TodoItemOrm(Base):
     status = Column(Boolean,nullable=False)
     due_date =  Column(DateTime)
     auther_id = Column(Integer,ForeignKey("User.id"))
-    owner = relationship(UserOrm, backref="parent")
+    owner = relationship(UserOrm, backref=backref("Todo",cascade="all,delete"))
 
     class Config:
         orm_mode = True
